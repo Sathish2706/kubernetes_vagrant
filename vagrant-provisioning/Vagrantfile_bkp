@@ -29,4 +29,26 @@ Vagrant.configure(2) do |config|
 
   NodeCount = 1
 
+  # Kubernetes Worker Nodes
+  (1..NodeCount).each do |i|
+    config.vm.define "kworker#{i}" do |workernode|
+      workernode.vm.box = "centos/7"
+      workernode.vm.hostname = "kworker#{i}.example.com"
+      workernode.vm.network "private_network", ip: "172.16.16.10#{i}"
+      workernode.vm.provider "virtualbox" do |v|
+        v.name = "kworker#{i}"
+        v.memory = 1024
+        v.cpus = 1
+        # Prevent VirtualBox from interfering with host audio stack
+        v.customize ["modifyvm", :id, "--audio", "none"]
+      end
+      workernode.vm.provider :libvirt do |v|
+        v.memory = 1048
+        v.nested = true
+        v.cpus = 1
+      end
+      workernode.vm.provision "shell", path: "bootstrap_kworker.sh"
+    end
+  end
+
 end
